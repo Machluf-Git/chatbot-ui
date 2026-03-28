@@ -15,7 +15,7 @@ export const Brand: FC<BrandProps> = ({ theme = "dark" }) => {
       href="/"
     >
       <div className="mb-2">
-        <BrandLogo theme={theme === "dark" ? "dark" : "light"} scale={0.28} />
+        <BrandLogo theme={theme === "dark" ? "dark" : "light"} scale={0.44} />
       </div>
 
       <div className="text-4xl font-bold tracking-wide">ADAM CHATBOT</div>

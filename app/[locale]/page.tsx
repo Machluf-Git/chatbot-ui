@@ -11,7 +11,7 @@ export default function HomePage() {
   return (
     <div className="flex size-full flex-col items-center justify-center">
       <div>
-        <BrandLogo theme={theme === "dark" ? "dark" : "light"} scale={0.28} />
+        <BrandLogo theme={theme === "dark" ? "dark" : "light"} scale={0.44} />
       </div>
 
       <div className="mt-2 text-4xl font-bold">ADAM CHATBOT</div>

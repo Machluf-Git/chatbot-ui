@@ -9,10 +9,13 @@ interface BrandLogoProps {
 }
 
 export const BrandLogo: FC<BrandLogoProps> = ({ theme = "dark", scale = 1 }) => {
-  void theme
-  const baseSize = 192
+  const baseSize = 256
   const size = Math.round(baseSize * scale)
-  const src = "/branding/adam-logo.png"
+  const src = "/branding/adam-logo-v2.png"
+  const className =
+    theme === "dark"
+      ? "brightness-125 drop-shadow-[0_0_10px_rgba(255,255,255,0.25)]"
+      : ""
 
   return (
     <Image
@@ -21,6 +24,7 @@ export const BrandLogo: FC<BrandLogoProps> = ({ theme = "dark", scale = 1 }) => 
       width={size}
       height={size}
       priority
+      className={className}
     />
   )
 }
