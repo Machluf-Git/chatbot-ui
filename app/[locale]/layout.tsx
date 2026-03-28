@@ -12,10 +12,10 @@ import { ReactNode } from "react"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
-const APP_NAME = "Chatbot UI"
-const APP_DEFAULT_TITLE = "Chatbot UI"
-const APP_TITLE_TEMPLATE = "%s - Chatbot UI"
-const APP_DESCRIPTION = "Chabot UI PWA!"
+const APP_NAME = "ADAM CHATBOT"
+const APP_DEFAULT_TITLE = "ADAM CHATBOT"
+const APP_TITLE_TEMPLATE = "%s - ADAM CHATBOT"
+const APP_DESCRIPTION = "ADAM CHATBOT PWA"
 
 interface RootLayoutProps {
   children: ReactNode
@@ -32,6 +32,10 @@ export const metadata: Metadata = {
   },
   description: APP_DESCRIPTION,
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon-192x192.png",
+    apple: "/icon-192x192.png"
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black",
