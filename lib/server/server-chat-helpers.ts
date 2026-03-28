@@ -1,7 +1,12 @@
 import { Database, Tables } from "@/supabase/types"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import {
+  applyGlobalApiKeysToProfile,
+  getGlobalApiKeyMap
+} from "./global-api-keys"
 
 export async function getServerProfile() {
   const cookieStore = cookies()
@@ -32,7 +37,17 @@ export async function getServerProfile() {
     throw new Error("Profile not found")
   }
 
-  const profileWithKeys = addApiKeysToProfile(profile)
+  const supabaseAdmin = createSupabaseClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  const globalApiKeyMap = await getGlobalApiKeyMap(supabaseAdmin)
+
+  const profileWithGlobalKeys = applyGlobalApiKeysToProfile(
+    profile,
+    globalApiKeyMap
+  )
+  const profileWithKeys = addApiKeysToProfile(profileWithGlobalKeys)
 
   return profileWithKeys
 }

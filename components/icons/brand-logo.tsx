@@ -8,7 +8,10 @@ interface BrandLogoProps {
   scale?: number
 }
 
-export const BrandLogo: FC<BrandLogoProps> = ({ theme = "dark", scale = 1 }) => {
+export const BrandLogo: FC<BrandLogoProps> = ({
+  theme = "dark",
+  scale = 1
+}) => {
   const baseSize = 256
   const size = Math.round(baseSize * scale)
   const src = "/branding/adam-logo-v2.png"

@@ -926,6 +926,35 @@ export type Database = {
           },
         ]
       }
+      app_api_keys: {
+        Row: {
+          api_key: string
+          provider: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          api_key: string
+          provider: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          api_key?: string
+          provider?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_api_keys_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       models: {
         Row: {
           api_key: string
@@ -1119,6 +1148,7 @@ export type Database = {
           id: string
           image_path: string
           image_url: string
+          is_admin: boolean
           mistral_api_key: string | null
           openai_api_key: string | null
           openai_organization_id: string | null
@@ -1147,6 +1177,7 @@ export type Database = {
           id?: string
           image_path: string
           image_url: string
+          is_admin?: boolean
           mistral_api_key?: string | null
           openai_api_key?: string | null
           openai_organization_id?: string | null
@@ -1175,6 +1206,7 @@ export type Database = {
           id?: string
           image_path?: string
           image_url?: string
+          is_admin?: boolean
           mistral_api_key?: string | null
           openai_api_key?: string | null
           openai_organization_id?: string | null

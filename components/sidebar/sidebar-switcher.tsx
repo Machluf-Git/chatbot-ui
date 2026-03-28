@@ -12,6 +12,7 @@ import {
 import { FC } from "react"
 import { TabsList } from "../ui/tabs"
 import { WithTooltip } from "../ui/with-tooltip"
+import { AdminApiKeysSettings } from "../utility/admin-api-keys-settings"
 import { ProfileSettings } from "../utility/profile-settings"
 import { SidebarSwitchItem } from "./sidebar-switch-item"
 
@@ -86,6 +87,11 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
         <WithTooltip
           display={<div>Profile Settings</div>}
           trigger={<ProfileSettings />}
+        />
+
+        <WithTooltip
+          display={<div>API Keys</div>}
+          trigger={<AdminApiKeysSettings />}
         />
       </div>
     </div>
