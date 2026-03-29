@@ -1,7 +1,12 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -132,6 +137,19 @@ export const AdminModelAccessSettings: FC<AdminModelAccessSettingsProps> = ({
     }
   }
 
+  const getAllowedUsersSummary = (model: ModelAccessEntry) => {
+    if (model.allowedUserIds.length === 0) {
+      return "No users selected"
+    }
+
+    if (model.allowedUserIds.length === 1) {
+      const selected = userOptions.find(u => u.id === model.allowedUserIds[0])
+      return selected?.label || "1 user selected"
+    }
+
+    return `${model.allowedUserIds.length} users selected`
+  }
+
   return (
     <div className="mt-4 space-y-4">
       <div className="space-y-1">
@@ -183,15 +201,21 @@ export const AdminModelAccessSettings: FC<AdminModelAccessSettingsProps> = ({
               {!model.isGlobal && (
                 <div className="space-y-2">
                   <div className="text-sm font-medium">Allowed users</div>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {userOptions.map(user => {
-                      const checked = model.allowedUserIds.includes(user.id)
-                      return (
-                        <label
-                          className="flex items-center gap-2 text-sm"
-                          key={`${model.modelKey}-${user.id}`}
-                        >
-                          <Checkbox
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="w-full justify-between" variant="outline">
+                        <span>{getAllowedUsersSummary(model)}</span>
+                        <span className="text-muted-foreground text-xs">
+                          Select users
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="max-h-72 w-72 overflow-y-auto">
+                      {userOptions.map(user => {
+                        const checked = model.allowedUserIds.includes(user.id)
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={`${model.modelKey}-${user.id}`}
                             checked={checked}
                             onCheckedChange={nextChecked => {
                               const allow = Boolean(nextChecked)
@@ -203,15 +227,14 @@ export const AdminModelAccessSettings: FC<AdminModelAccessSettingsProps> = ({
                                 allowedUserIds: [...new Set(nextUserIds)]
                               })
                             }}
-                          />
-                          <span>
+                          >
                             {user.label}
                             {user.isAdmin ? " (admin)" : ""}
-                          </span>
-                        </label>
-                      )
-                    })}
-                  </div>
+                          </DropdownMenuCheckboxItem>
+                        )
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
 
