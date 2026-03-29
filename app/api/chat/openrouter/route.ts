@@ -1,4 +1,5 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { ensureCurrentUserCanUseModel } from "@/lib/server/model-access-check"
 import { ChatSettings } from "@/types"
 import { OpenAIStream, StreamingTextResponse } from "ai"
 import { ServerRuntime } from "next"
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await ensureCurrentUserCanUseModel("openrouter", chatSettings.model)
     const profile = await getServerProfile()
 
     checkApiKey(profile.openrouter_api_key, "OpenRouter")
@@ -36,6 +38,12 @@ export async function POST(request: Request) {
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {
+    if (error.message === "Forbidden") {
+      return new Response(JSON.stringify({ message: "Forbidden" }), {
+        status: 403
+      })
+    }
+
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 

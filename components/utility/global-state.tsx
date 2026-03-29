@@ -8,9 +8,7 @@ import { getWorkspaceImageFromStorage } from "@/db/storage/workspace-images"
 import { getWorkspacesByUserId } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import {
-  fetchHostedModels,
-  fetchOllamaModels,
-  fetchOpenRouterModels
+  fetchOllamaModels
 } from "@/lib/models/fetch-models"
 import { supabase } from "@/lib/supabase/browser-client"
 import { Tables } from "@/supabase/types"
@@ -125,23 +123,21 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
 
   useEffect(() => {
     ;(async () => {
-      const profile = await fetchStartingData()
+      await fetchStartingData()
 
-      if (profile) {
-        const hostedModelRes = await fetchHostedModels(profile)
-        if (!hostedModelRes) return
-
-        setEnvKeyMap(hostedModelRes.envKeyMap)
-        setAvailableHostedModels(hostedModelRes.hostedModels)
-
-        if (
-          profile["openrouter_api_key"] ||
-          hostedModelRes.envKeyMap["openrouter"]
-        ) {
-          const openRouterModels = await fetchOpenRouterModels()
-          if (!openRouterModels) return
-          setAvailableOpenRouterModels(openRouterModels)
+      try {
+        const response = await fetch("/api/models/available", {
+          method: "GET"
+        })
+        if (!response.ok) {
+          throw new Error("Failed to load model access")
         }
+
+        const data = await response.json()
+        setAvailableHostedModels(data.hostedModels || [])
+        setAvailableOpenRouterModels(data.openRouterModels || [])
+      } catch (error) {
+        console.warn("Error loading available API models: " + error)
       }
 
       if (process.env.NEXT_PUBLIC_OLLAMA_URL) {

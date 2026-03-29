@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils"
 import { ContentType } from "@/types"
 import { IconChevronCompactRight } from "@tabler/icons-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { FC, useState } from "react"
+import { FC, useContext, useEffect, useState } from "react"
 import { useSelectFileHandler } from "../chat/chat-hooks/use-select-file-handler"
 import { CommandK } from "../utility/command-k"
+import { ChatbotUIContext } from "@/context/context"
 
 export const SIDEBAR_WIDTH = 350
 
@@ -26,6 +27,8 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabValue = searchParams.get("tab") || "chats"
+  const { profile } = useContext(ChatbotUIContext)
+  const shouldRestrictModelsTab = profile !== null && !profile.is_admin
 
   const { handleSelectDeviceFile } = useSelectFileHandler()
 
@@ -66,6 +69,13 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
     setShowSidebar(prevState => !prevState)
     localStorage.setItem("showSidebar", String(!showSidebar))
   }
+
+  useEffect(() => {
+    if (shouldRestrictModelsTab && contentType === "models") {
+      setContentType("chats")
+      router.replace(`${pathname}?tab=chats`)
+    }
+  }, [contentType, pathname, router, shouldRestrictModelsTab])
 
   return (
     <div className="flex size-full">

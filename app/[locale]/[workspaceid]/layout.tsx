@@ -7,7 +7,6 @@ import { getChatsByWorkspaceId } from "@/db/chats"
 import { getCollectionWorkspacesByWorkspaceId } from "@/db/collections"
 import { getFileWorkspacesByWorkspaceId } from "@/db/files"
 import { getFoldersByWorkspaceId } from "@/db/folders"
-import { getModelWorkspacesByWorkspaceId } from "@/db/models"
 import { getPresetWorkspacesByWorkspaceId } from "@/db/presets"
 import { getPromptWorkspacesByWorkspaceId } from "@/db/prompts"
 import { getAssistantImageFromStorage } from "@/db/storage/assistant-images"
@@ -153,8 +152,21 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     const toolData = await getToolWorkspacesByWorkspaceId(workspaceId)
     setTools(toolData.tools)
 
-    const modelData = await getModelWorkspacesByWorkspaceId(workspaceId)
-    setModels(modelData.models)
+    try {
+      const modelResponse = await fetch(
+        `/api/models/available?workspaceId=${workspaceId}`,
+        { method: "GET" }
+      )
+      const modelPayload = await modelResponse.json()
+
+      if (modelResponse.ok) {
+        setModels(modelPayload.customModels || [])
+      } else {
+        setModels([])
+      }
+    } catch {
+      setModels([])
+    }
 
     setChatSettings({
       model: (searchParams.get("model") ||

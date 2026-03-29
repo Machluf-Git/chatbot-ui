@@ -1,4 +1,5 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { ensureCurrentUserCanUseModel } from "@/lib/server/model-access-check"
 import { ChatSettings } from "@/types"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await ensureCurrentUserCanUseModel("google", chatSettings.model)
     const profile = await getServerProfile()
 
     checkApiKey(profile.google_gemini_api_key, "Google")
@@ -45,6 +47,12 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "text/plain" }
     })
   } catch (error: any) {
+    if (error.message === "Forbidden") {
+      return new Response(JSON.stringify({ message: "Forbidden" }), {
+        status: 403
+      })
+    }
+
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 

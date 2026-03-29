@@ -13,6 +13,7 @@ import {
 } from "react"
 import { toast } from "sonner"
 import { SIDEBAR_ICON_SIZE } from "../sidebar/sidebar-switcher"
+import { AdminModelAccessSettings } from "./admin-model-access-settings"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
@@ -24,6 +25,7 @@ import {
   SheetTrigger
 } from "../ui/sheet"
 import { Switch } from "../ui/switch"
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs"
 
 type EntryState = {
   configured: boolean
@@ -66,6 +68,9 @@ export const AdminApiKeysSettings: FC<AdminApiKeysSettingsProps> = ({}) => {
   const [entries, setEntries] = useState<Record<string, EntryState>>({})
   const [formValues, setFormValues] = useState<Record<string, string>>({})
   const [useAzureOpenai, setUseAzureOpenai] = useState(false)
+  const [activeTab, setActiveTab] = useState<"api-keys" | "models-access">(
+    "api-keys"
+  )
 
   const isAdmin = !!profile?.is_admin
 
@@ -107,6 +112,8 @@ export const AdminApiKeysSettings: FC<AdminApiKeysSettingsProps> = ({}) => {
   useEffect(() => {
     if (isOpen) {
       loadEntries()
+    } else {
+      setActiveTab("api-keys")
     }
   }, [isOpen, loadEntries])
 
@@ -174,15 +181,28 @@ export const AdminApiKeysSettings: FC<AdminApiKeysSettingsProps> = ({}) => {
       >
         <div className="grow overflow-auto">
           <SheetHeader>
-            <SheetTitle>API Keys (Admin)</SheetTitle>
+            <SheetTitle>Admin Settings</SheetTitle>
           </SheetHeader>
 
-          {isLoading ? (
+          <Tabs
+            className="mt-4"
+            value={activeTab}
+            onValueChange={value => setActiveTab(value as typeof activeTab)}
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+              <TabsTrigger value="models-access">Models Access</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {activeTab === "api-keys" && isLoading ? (
             <div className="text-muted-foreground mt-6 flex items-center gap-2 text-sm">
               <IconLoader2 className="animate-spin" size={16} />
               Loading key settings...
             </div>
-          ) : (
+          ) : null}
+
+          {activeTab === "api-keys" && !isLoading ? (
             <div className="mt-6 space-y-4">
               <div className="rounded-md border p-3 text-sm">
                 Configured fields: {configuredCount}
@@ -227,22 +247,28 @@ export const AdminApiKeysSettings: FC<AdminApiKeysSettingsProps> = ({}) => {
                 )
               })}
             </div>
-          )}
+          ) : null}
+
+          {activeTab === "models-access" ? (
+            <AdminModelAccessSettings isOpen={isOpen} />
+          ) : null}
         </div>
 
-        <div className="mt-6 flex items-center justify-end space-x-2">
-          <Button variant="ghost" onClick={() => setIsOpen(false)}>
-            Cancel
-          </Button>
+        {activeTab === "api-keys" ? (
+          <div className="mt-6 flex items-center justify-end space-x-2">
+            <Button variant="ghost" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
 
-          <Button
-            ref={buttonRef}
-            disabled={isLoading || isSaving}
-            onClick={handleSave}
-          >
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
-        </div>
+            <Button
+              ref={buttonRef}
+              disabled={isLoading || isSaving}
+              onClick={handleSave}
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        ) : null}
       </SheetContent>
     </Sheet>
   )

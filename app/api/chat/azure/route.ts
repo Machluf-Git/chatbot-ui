@@ -1,4 +1,5 @@
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { ensureCurrentUserCanUseModel } from "@/lib/server/model-access-check"
 import { ChatAPIPayload } from "@/types"
 import { OpenAIStream, StreamingTextResponse } from "ai"
 import OpenAI from "openai"
@@ -11,6 +12,7 @@ export async function POST(request: Request) {
   const { chatSettings, messages } = json as ChatAPIPayload
 
   try {
+    await ensureCurrentUserCanUseModel("openai", chatSettings.model)
     const profile = await getServerProfile()
 
     checkApiKey(profile.azure_openai_api_key, "Azure OpenAI")
@@ -63,6 +65,12 @@ export async function POST(request: Request) {
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {
+    if (error.message === "Forbidden") {
+      return new Response(JSON.stringify({ message: "Forbidden" }), {
+        status: 403
+      })
+    }
+
     const errorMessage = error.error?.message || "An unexpected error occurred"
     const errorCode = error.status || 500
     return new Response(JSON.stringify({ message: errorMessage }), {

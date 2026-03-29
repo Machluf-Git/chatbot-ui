@@ -97,7 +97,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
       >
         {allModels.length === 0 ? (
           <div className="rounded text-sm font-bold">
-            Unlock models by entering API keys in your profile settings.
+            No models available for your account. Contact your admin.
           </div>
         ) : (
           <Button

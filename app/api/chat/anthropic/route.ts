@@ -1,5 +1,6 @@
 import { CHAT_SETTING_LIMITS } from "@/lib/chat-setting-limits"
 import { checkApiKey, getServerProfile } from "@/lib/server/server-chat-helpers"
+import { ensureCurrentUserCanUseModel } from "@/lib/server/model-access-check"
 import { getBase64FromDataURL, getMediaTypeFromDataURL } from "@/lib/utils"
 import { ChatSettings } from "@/types"
 import Anthropic from "@anthropic-ai/sdk"
@@ -16,6 +17,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    await ensureCurrentUserCanUseModel("anthropic", chatSettings.model)
     const profile = await getServerProfile()
 
     checkApiKey(profile.anthropic_api_key, "Anthropic")
@@ -93,6 +95,12 @@ export async function POST(request: NextRequest) {
       )
     }
   } catch (error: any) {
+    if (error.message === "Forbidden") {
+      return new NextResponse(JSON.stringify({ message: "Forbidden" }), {
+        status: 403
+      })
+    }
+
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 

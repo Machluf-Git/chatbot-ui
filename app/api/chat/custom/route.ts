@@ -1,4 +1,6 @@
 import { Database } from "@/supabase/types"
+import { getServerAuthContext } from "@/lib/server/admin"
+import { buildModelKey, getModelPolicies, isModelAllowedForUser } from "@/lib/server/model-access"
 import { ChatSettings } from "@/types"
 import { createClient } from "@supabase/supabase-js"
 import { OpenAIStream, StreamingTextResponse } from "ai"
@@ -17,6 +19,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const { user, profile } = await getServerAuthContext()
     const supabaseAdmin = createClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -30,6 +33,26 @@ export async function POST(request: Request) {
 
     if (!customModel) {
       throw new Error(error.message)
+    }
+
+    if (!profile.is_admin) {
+      const modelKey = buildModelKey("custom", customModel.model_id)
+      const { byKey, allowedUsersByKey } = await getModelPolicies(
+        supabaseAdmin,
+        [modelKey]
+      )
+
+      const allowed = isModelAllowedForUser({
+        isAdmin: false,
+        userId: user.id,
+        modelKey,
+        policyByKey: byKey,
+        allowedUsersByKey
+      })
+
+      if (!allowed) {
+        throw new Error("Forbidden")
+      }
     }
 
     const custom = new OpenAI({
@@ -48,6 +71,12 @@ export async function POST(request: Request) {
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {
+    if (error.message === "Forbidden") {
+      return new Response(JSON.stringify({ message: "Forbidden" }), {
+        status: 403
+      })
+    }
+
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 
