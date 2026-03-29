@@ -157,7 +157,6 @@ export async function getModelPolicies(
   const { data: policies, error: policyError } = await (supabaseAdmin as any)
     .from("app_model_access")
     .select("model_key, is_global")
-    .in("model_key", modelKeys)
 
   if (policyError) {
     throw new Error(policyError.message)
@@ -166,19 +165,26 @@ export async function getModelPolicies(
   const { data: userRows, error: userError } = await (supabaseAdmin as any)
     .from("app_model_access_users")
     .select("model_key, user_id")
-    .in("model_key", modelKeys)
 
   if (userError) {
     throw new Error(userError.message)
   }
 
+  const requestedKeys = new Set(modelKeys)
+
   const byKey = new Map<string, { isGlobal: boolean }>()
   for (const row of policies || []) {
+    if (!requestedKeys.has(row.model_key)) {
+      continue
+    }
     byKey.set(row.model_key, { isGlobal: Boolean(row.is_global) })
   }
 
   const allowedUsersByKey = new Map<string, string[]>()
   for (const row of userRows || []) {
+    if (!requestedKeys.has(row.model_key)) {
+      continue
+    }
     const current = allowedUsersByKey.get(row.model_key) || []
     current.push(row.user_id)
     allowedUsersByKey.set(row.model_key, current)
