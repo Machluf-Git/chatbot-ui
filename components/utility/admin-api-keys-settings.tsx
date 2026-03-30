@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner"
 import { SIDEBAR_ICON_SIZE } from "../sidebar/sidebar-switcher"
 import { AdminModelAccessSettings } from "./admin-model-access-settings"
+import { AdminUsersSettings } from "./admin-users-settings"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
@@ -68,9 +69,9 @@ export const AdminApiKeysSettings: FC<AdminApiKeysSettingsProps> = ({}) => {
   const [entries, setEntries] = useState<Record<string, EntryState>>({})
   const [formValues, setFormValues] = useState<Record<string, string>>({})
   const [useAzureOpenai, setUseAzureOpenai] = useState(false)
-  const [activeTab, setActiveTab] = useState<"api-keys" | "models-access">(
-    "api-keys"
-  )
+  const [activeTab, setActiveTab] = useState<
+    "api-keys" | "models-access" | "users"
+  >("api-keys")
 
   const isAdmin = !!profile?.is_admin
 
@@ -189,9 +190,10 @@ export const AdminApiKeysSettings: FC<AdminApiKeysSettingsProps> = ({}) => {
             value={activeTab}
             onValueChange={value => setActiveTab(value as typeof activeTab)}
           >
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="api-keys">API Keys</TabsTrigger>
               <TabsTrigger value="models-access">Models Access</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -252,6 +254,8 @@ export const AdminApiKeysSettings: FC<AdminApiKeysSettingsProps> = ({}) => {
           {activeTab === "models-access" ? (
             <AdminModelAccessSettings isOpen={isOpen} />
           ) : null}
+
+          {activeTab === "users" ? <AdminUsersSettings isOpen={isOpen} /> : null}
         </div>
 
         {activeTab === "api-keys" ? (
