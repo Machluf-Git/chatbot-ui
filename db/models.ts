@@ -6,10 +6,14 @@ export const getModelById = async (modelId: string) => {
     .from("models")
     .select("*")
     .eq("id", modelId)
-    .single()
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
 
   if (!model) {
-    throw new Error(error.message)
+    throw new Error("Model not found")
   }
 
   return model
@@ -26,10 +30,14 @@ export const getModelWorkspacesByWorkspaceId = async (workspaceId: string) => {
     `
     )
     .eq("id", workspaceId)
-    .single()
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
 
   if (!workspace) {
-    throw new Error(error.message)
+    throw new Error("Workspace not found")
   }
 
   return workspace
@@ -46,10 +54,14 @@ export const getModelWorkspacesByModelId = async (modelId: string) => {
     `
     )
     .eq("id", modelId)
-    .single()
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
 
   if (!model) {
-    throw new Error(error.message)
+    throw new Error("Model not found")
   }
 
   return model
@@ -111,10 +123,14 @@ export const createModelWorkspace = async (item: {
     .from("model_workspaces")
     .insert([item])
     .select("*")
-    .single()
+    .maybeSingle()
 
   if (error) {
     throw new Error(error.message)
+  }
+
+  if (!createdModelWorkspace) {
+    throw new Error("Failed to create model workspace")
   }
 
   return createdModelWorkspace
@@ -142,10 +158,14 @@ export const updateModel = async (
     .update(model)
     .eq("id", modelId)
     .select("*")
-    .single()
+    .maybeSingle()
 
   if (error) {
     throw new Error(error.message)
+  }
+
+  if (!updatedModel) {
+    throw new Error("Failed to update model")
   }
 
   return updatedModel

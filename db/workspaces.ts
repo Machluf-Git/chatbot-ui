@@ -7,10 +7,14 @@ export const getHomeWorkspaceByUserId = async (userId: string) => {
     .select("*")
     .eq("user_id", userId)
     .eq("is_home", true)
-    .single()
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
 
   if (!homeWorkspace) {
-    throw new Error(error.message)
+    throw new Error("Workspace not found")
   }
 
   return homeWorkspace.id
@@ -21,10 +25,14 @@ export const getWorkspaceById = async (workspaceId: string) => {
     .from("workspaces")
     .select("*")
     .eq("id", workspaceId)
-    .single()
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(error.message)
+  }
 
   if (!workspace) {
-    throw new Error(error.message)
+    throw new Error("Workspace not found")
   }
 
   return workspace
