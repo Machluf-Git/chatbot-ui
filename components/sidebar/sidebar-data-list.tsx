@@ -9,9 +9,10 @@ import { updatePrompt } from "@/db/prompts"
 import { updateTool } from "@/db/tools"
 import { cn } from "@/lib/utils"
 import { Tables } from "@/supabase/types"
-import { ContentType, DataItemType, DataListType } from "@/types"
+import { ContentType, DataItemType, DataListType, WorkflowTemplate } from "@/types"
 import { FC, useContext, useEffect, useRef, useState } from "react"
 import { Separator } from "../ui/separator"
+import { WorkflowItem } from "../workflows/workflow-item"
 import { AssistantItem } from "./items/assistants/assistant-item"
 import { ChatItem } from "./items/chat/chat-item"
 import { CollectionItem } from "./items/collections/collection-item"
@@ -41,7 +42,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     setCollections,
     setAssistants,
     setTools,
-    setModels
+    setModels,
+    setWorkflowTemplates
   } = useContext(ChatbotUIContext)
 
   const divRef = useRef<HTMLDivElement>(null)
@@ -49,10 +51,7 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
   const [isOverflowing, setIsOverflowing] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
 
-  const getDataListComponent = (
-    contentType: ContentType,
-    item: DataItemType
-  ) => {
+  const getDataListComponent = (contentType: ContentType, item: any) => {
     switch (contentType) {
       case "chats":
         return <ChatItem key={item.id} chat={item as Tables<"chats">} />
@@ -87,6 +86,14 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 
       case "models":
         return <ModelItem key={item.id} model={item as Tables<"models">} />
+
+      case "workflows":
+        return (
+          <WorkflowItem
+            key={item.id}
+            workflow={item as WorkflowTemplate}
+          />
+        )
 
       default:
         return null
@@ -140,7 +147,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     collections: updateCollection,
     assistants: updateAssistant,
     tools: updateTool,
-    models: updateModel
+    models: updateModel,
+    workflows: null
   }
 
   const stateUpdateFunctions = {
@@ -151,7 +159,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     collections: setCollections,
     assistants: setAssistants,
     tools: setTools,
-    models: setModels
+    models: setModels,
+    workflows: setWorkflowTemplates
   }
 
   const updateFolder = async (itemId: string, folderId: string | null) => {
@@ -214,8 +223,31 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     }
   }, [data])
 
-  const dataWithFolders = data.filter(item => item.folder_id)
-  const dataWithoutFolders = data.filter(item => item.folder_id === null)
+  if (contentType === "workflows") {
+    return (
+      <div ref={divRef} className="mt-2 flex flex-col overflow-auto">
+        {data.length === 0 ? (
+          <div className="flex grow flex-col items-center justify-center">
+            <div className="text-centertext-muted-foreground p-8 text-lg italic">
+              No workflows.
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2 pt-2">
+            {(data as WorkflowTemplate[]).map(item => (
+              <div key={item.id}>{getDataListComponent(contentType, item as any)}</div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const nonWorkflowData = data as Exclude<DataListType, WorkflowTemplate[]>
+  const dataWithFolders = nonWorkflowData.filter(item => item.folder_id)
+  const dataWithoutFolders = nonWorkflowData.filter(
+    item => item.folder_id === null
+  )
 
   return (
     <>

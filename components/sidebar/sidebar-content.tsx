@@ -18,9 +18,18 @@ export const SidebarContent: FC<SidebarContentProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("")
 
-  const filteredData: any = data.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredData: any = data.filter((item: any) => {
+    const normalizedSearch = searchTerm.toLowerCase()
+
+    if (contentType === "workflows") {
+      return (
+        item.name.toLowerCase().includes(normalizedSearch) ||
+        item.trigger_type.toLowerCase().includes(normalizedSearch)
+      )
+    }
+
+    return item.name.toLowerCase().includes(normalizedSearch)
+  })
 
   return (
     // Subtract 50px for the height of the workspace settings

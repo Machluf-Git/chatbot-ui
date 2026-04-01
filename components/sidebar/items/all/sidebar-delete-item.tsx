@@ -39,7 +39,8 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     setCollections,
     setAssistants,
     setTools,
-    setModels
+    setModels,
+    setWorkflowTemplates
   } = useContext(ChatbotUIContext)
 
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -74,7 +75,8 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     },
     models: async (model: Tables<"models">) => {
       await deleteModel(model.id)
-    }
+    },
+    workflows: null
   }
 
   const stateUpdateFunctions = {
@@ -85,7 +87,8 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
     collections: setCollections,
     assistants: setAssistants,
     tools: setTools,
-    models: setModels
+    models: setModels,
+    workflows: setWorkflowTemplates
   }
 
   const handleDelete = async () => {

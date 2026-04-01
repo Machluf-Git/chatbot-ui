@@ -19,6 +19,9 @@ import {
   LLM,
   MessageImage,
   OpenRouterLLM,
+  WorkflowRun,
+  WorkflowRunDetail,
+  WorkflowTemplate,
   WorkspaceImage
 } from "@/types"
 import { AssistantImage } from "@/types/images/assistant-image"
@@ -46,6 +49,9 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [presets, setPresets] = useState<Tables<"presets">[]>([])
   const [prompts, setPrompts] = useState<Tables<"prompts">[]>([])
   const [tools, setTools] = useState<Tables<"tools">[]>([])
+  const [workflowTemplates, setWorkflowTemplates] = useState<WorkflowTemplate[]>(
+    []
+  )
   const [workspaces, setWorkspaces] = useState<Tables<"workspaces">[]>([])
 
   // MODELS STORE
@@ -59,6 +65,16 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   // WORKSPACE STORE
   const [selectedWorkspace, setSelectedWorkspace] =
     useState<Tables<"workspaces"> | null>(null)
+  const [selectedWorkflowTemplate, setSelectedWorkflowTemplate] =
+    useState<WorkflowTemplate | null>(null)
+  const [workflowRuns, setWorkflowRuns] = useState<WorkflowRun[]>([])
+  const [selectedWorkflowRun, setSelectedWorkflowRun] =
+    useState<WorkflowRunDetail | null>(null)
+  const [isLoadingWorkflowTemplates, setIsLoadingWorkflowTemplates] =
+    useState(false)
+  const [isLoadingWorkflowRuns, setIsLoadingWorkflowRuns] = useState(false)
+  const [isLoadingWorkflowRunDetail, setIsLoadingWorkflowRunDetail] =
+    useState(false)
   const [workspaceImages, setWorkspaceImages] = useState<WorkspaceImage[]>([])
 
   // PRESET STORE
@@ -219,6 +235,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setPrompts,
         tools,
         setTools,
+        workflowTemplates,
+        setWorkflowTemplates,
         workspaces,
         setWorkspaces,
 
@@ -235,6 +253,18 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         // WORKSPACE STORE
         selectedWorkspace,
         setSelectedWorkspace,
+        selectedWorkflowTemplate,
+        setSelectedWorkflowTemplate,
+        workflowRuns,
+        setWorkflowRuns,
+        selectedWorkflowRun,
+        setSelectedWorkflowRun,
+        isLoadingWorkflowTemplates,
+        setIsLoadingWorkflowTemplates,
+        isLoadingWorkflowRuns,
+        setIsLoadingWorkflowRuns,
+        isLoadingWorkflowRunDetail,
+        setIsLoadingWorkflowRunDetail,
         workspaceImages,
         setWorkspaceImages,
 

@@ -1,4 +1,5 @@
 import { Tables } from "@/supabase/types"
+import { WorkflowTemplate } from "./workflow"
 
 export type DataListType =
   | Tables<"collections">[]
@@ -9,6 +10,7 @@ export type DataListType =
   | Tables<"assistants">[]
   | Tables<"tools">[]
   | Tables<"models">[]
+  | WorkflowTemplate[]
 
 export type DataItemType =
   | Tables<"collections">

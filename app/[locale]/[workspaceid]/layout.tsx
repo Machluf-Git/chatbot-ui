@@ -11,6 +11,7 @@ import { getPresetWorkspacesByWorkspaceId } from "@/db/presets"
 import { getPromptWorkspacesByWorkspaceId } from "@/db/prompts"
 import { getAssistantImageFromStorage } from "@/db/storage/assistant-images"
 import { getToolWorkspacesByWorkspaceId } from "@/db/tools"
+import { getWorkflowTemplatesByWorkspaceId } from "@/db/workflows"
 import { getWorkspaceById } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { supabase } from "@/lib/supabase/browser-client"
@@ -42,6 +43,14 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setPrompts,
     setTools,
     setModels,
+    profile,
+    setWorkflowTemplates,
+    setSelectedWorkflowTemplate,
+    setWorkflowRuns,
+    setSelectedWorkflowRun,
+    setIsLoadingWorkflowTemplates,
+    setIsLoadingWorkflowRuns,
+    setIsLoadingWorkflowRunDetail,
     selectedWorkspace,
     setSelectedWorkspace,
     setSelectedChat,
@@ -85,6 +94,9 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setNewMessageFiles([])
     setNewMessageImages([])
     setShowFilesDisplay(false)
+    setSelectedWorkflowTemplate(null)
+    setSelectedWorkflowRun(null)
+    setWorkflowRuns([])
   }, [workspaceId])
 
   const fetchWorkspaceData = async (workspaceId: string) => {
@@ -167,6 +179,33 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     } catch {
       setModels([])
     }
+
+    const session = (await supabase.auth.getSession()).data.session
+    const currentUserId = session?.user?.id
+    const isWorkspaceOwner =
+      Boolean(currentUserId) && workspace?.user_id === currentUserId
+
+    setIsLoadingWorkflowTemplates(true)
+    setIsLoadingWorkflowRuns(false)
+    setIsLoadingWorkflowRunDetail(false)
+
+    if (isWorkspaceOwner) {
+      try {
+        const templates = await getWorkflowTemplatesByWorkspaceId(workspaceId)
+        setWorkflowTemplates(templates)
+        setSelectedWorkflowTemplate(prev =>
+          templates.find(template => template.id === prev?.id) || templates[0] || null
+        )
+      } catch {
+        setWorkflowTemplates([])
+        setSelectedWorkflowTemplate(null)
+      }
+    } else {
+      setWorkflowTemplates([])
+      setSelectedWorkflowTemplate(null)
+    }
+
+    setIsLoadingWorkflowTemplates(false)
 
     setChatSettings({
       model: (searchParams.get("model") ||

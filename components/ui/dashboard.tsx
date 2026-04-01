@@ -3,6 +3,7 @@
 import { Sidebar } from "@/components/sidebar/sidebar"
 import { SidebarSwitcher } from "@/components/sidebar/sidebar-switcher"
 import { Button } from "@/components/ui/button"
+import { WorkflowWorkspace } from "@/components/workflows/workflow-workspace"
 import { Tabs } from "@/components/ui/tabs"
 import useHotkey from "@/lib/hooks/use-hotkey"
 import { cn } from "@/lib/utils"
@@ -27,8 +28,12 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabValue = searchParams.get("tab") || "chats"
-  const { profile } = useContext(ChatbotUIContext)
+  const { profile, selectedWorkspace } = useContext(ChatbotUIContext)
   const shouldRestrictModelsTab = profile !== null && !profile.is_admin
+  const shouldRestrictWorkflowsTab =
+    Boolean(profile?.user_id) &&
+    Boolean(selectedWorkspace?.user_id) &&
+    profile?.user_id !== selectedWorkspace?.user_id
 
   const { handleSelectDeviceFile } = useSelectFileHandler()
 
@@ -77,6 +82,13 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
     }
   }, [contentType, pathname, router, shouldRestrictModelsTab])
 
+  useEffect(() => {
+    if (shouldRestrictWorkflowsTab && contentType === "workflows") {
+      setContentType("chats")
+      router.replace(`${pathname}?tab=chats`)
+    }
+  }, [contentType, pathname, router, shouldRestrictWorkflowsTab])
+
   return (
     <div className="flex size-full">
       <CommandK />
@@ -119,6 +131,8 @@ export const Dashboard: FC<DashboardProps> = ({ children }) => {
           <div className="flex h-full items-center justify-center bg-black/50 text-2xl text-white">
             drop file here
           </div>
+        ) : contentType === "workflows" ? (
+          <WorkflowWorkspace />
         ) : (
           children
         )}

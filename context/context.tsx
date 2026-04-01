@@ -6,6 +6,9 @@ import {
   LLM,
   MessageImage,
   OpenRouterLLM,
+  WorkflowRun,
+  WorkflowRunDetail,
+  WorkflowTemplate,
   WorkspaceImage
 } from "@/types"
 import { AssistantImage } from "@/types/images/assistant-image"
@@ -36,6 +39,8 @@ interface ChatbotUIContext {
   setPrompts: Dispatch<SetStateAction<Tables<"prompts">[]>>
   tools: Tables<"tools">[]
   setTools: Dispatch<SetStateAction<Tables<"tools">[]>>
+  workflowTemplates: WorkflowTemplate[]
+  setWorkflowTemplates: Dispatch<SetStateAction<WorkflowTemplate[]>>
   workspaces: Tables<"workspaces">[]
   setWorkspaces: Dispatch<SetStateAction<Tables<"workspaces">[]>>
 
@@ -52,6 +57,18 @@ interface ChatbotUIContext {
   // WORKSPACE STORE
   selectedWorkspace: Tables<"workspaces"> | null
   setSelectedWorkspace: Dispatch<SetStateAction<Tables<"workspaces"> | null>>
+  selectedWorkflowTemplate: WorkflowTemplate | null
+  setSelectedWorkflowTemplate: Dispatch<SetStateAction<WorkflowTemplate | null>>
+  workflowRuns: WorkflowRun[]
+  setWorkflowRuns: Dispatch<SetStateAction<WorkflowRun[]>>
+  selectedWorkflowRun: WorkflowRunDetail | null
+  setSelectedWorkflowRun: Dispatch<SetStateAction<WorkflowRunDetail | null>>
+  isLoadingWorkflowTemplates: boolean
+  setIsLoadingWorkflowTemplates: Dispatch<SetStateAction<boolean>>
+  isLoadingWorkflowRuns: boolean
+  setIsLoadingWorkflowRuns: Dispatch<SetStateAction<boolean>>
+  isLoadingWorkflowRunDetail: boolean
+  setIsLoadingWorkflowRunDetail: Dispatch<SetStateAction<boolean>>
   workspaceImages: WorkspaceImage[]
   setWorkspaceImages: Dispatch<SetStateAction<WorkspaceImage[]>>
 
@@ -162,6 +179,8 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   setPrompts: () => {},
   tools: [],
   setTools: () => {},
+  workflowTemplates: [],
+  setWorkflowTemplates: () => {},
   workspaces: [],
   setWorkspaces: () => {},
 
@@ -178,6 +197,18 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   // WORKSPACE STORE
   selectedWorkspace: null,
   setSelectedWorkspace: () => {},
+  selectedWorkflowTemplate: null,
+  setSelectedWorkflowTemplate: () => {},
+  workflowRuns: [],
+  setWorkflowRuns: () => {},
+  selectedWorkflowRun: null,
+  setSelectedWorkflowRun: () => {},
+  isLoadingWorkflowTemplates: false,
+  setIsLoadingWorkflowTemplates: () => {},
+  isLoadingWorkflowRuns: false,
+  setIsLoadingWorkflowRuns: () => {},
+  isLoadingWorkflowRunDetail: false,
+  setIsLoadingWorkflowRunDetail: () => {},
   workspaceImages: [],
   setWorkspaceImages: () => {},
 

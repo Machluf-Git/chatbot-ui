@@ -113,6 +113,7 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     setAssistants,
     setTools,
     setModels,
+    setWorkflowTemplates,
     setAssistantImages
   } = useContext(ChatbotUIContext)
 
@@ -196,7 +197,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       setSelectedAssistantTools
     },
     tools: null,
-    models: null
+    models: null,
+    workflows: null
   }
 
   const fetchDataFunctions = {
@@ -226,7 +228,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       setSelectedAssistantTools([])
     },
     tools: null,
-    models: null
+    models: null,
+    workflows: null
   }
 
   const fetchWorkpaceFunctions = {
@@ -258,7 +261,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     models: async (modelId: string) => {
       const item = await getModelWorkspacesByModelId(modelId)
       return item.workspaces
-    }
+    },
+    workflows: null
   }
 
   const fetchSelectedWorkspaces = async () => {
@@ -568,7 +572,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
       )
 
       return updatedModel
-    }
+    },
+    workflows: null
   }
 
   const stateUpdateFunctions = {
@@ -579,7 +584,8 @@ export const SidebarUpdateItem: FC<SidebarUpdateItemProps> = ({
     collections: setCollections,
     assistants: setAssistants,
     tools: setTools,
-    models: setModels
+    models: setModels,
+    workflows: setWorkflowTemplates
   }
 
   const handleUpdate = async () => {

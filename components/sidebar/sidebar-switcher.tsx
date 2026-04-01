@@ -2,6 +2,7 @@ import { ContentType } from "@/types"
 import {
   IconAdjustmentsHorizontal,
   IconBolt,
+  IconBinaryTree2,
   IconBooks,
   IconFile,
   IconMessage,
@@ -26,8 +27,12 @@ interface SidebarSwitcherProps {
 export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
   onContentTypeChange
 }) => {
-  const { profile } = useContext(ChatbotUIContext)
+  const { profile, selectedWorkspace } = useContext(ChatbotUIContext)
   const isAdmin = Boolean(profile?.is_admin)
+  const isWorkspaceOwner =
+    Boolean(profile?.user_id) &&
+    Boolean(selectedWorkspace?.user_id) &&
+    profile?.user_id === selectedWorkspace?.user_id
 
   const items = useMemo(
     () =>
@@ -53,9 +58,15 @@ export const SidebarSwitcher: FC<SidebarSwitcherProps> = ({
           icon: <IconRobotFace size={SIDEBAR_ICON_SIZE} />,
           contentType: "assistants"
         },
+        isWorkspaceOwner
+          ? {
+              icon: <IconBinaryTree2 size={SIDEBAR_ICON_SIZE} />,
+              contentType: "workflows"
+            }
+          : null,
         { icon: <IconBolt size={SIDEBAR_ICON_SIZE} />, contentType: "tools" }
       ].filter(Boolean) as { icon: ReactNode; contentType: ContentType }[],
-    [isAdmin]
+    [isAdmin, isWorkspaceOwner]
   )
 
   return (

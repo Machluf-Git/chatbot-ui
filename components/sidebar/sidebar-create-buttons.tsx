@@ -5,6 +5,7 @@ import { ContentType } from "@/types"
 import { IconFolderPlus, IconPlus } from "@tabler/icons-react"
 import { FC, useContext, useState } from "react"
 import { Button } from "../ui/button"
+import { CreateWorkflow } from "../workflows/create-workflow"
 import { CreateAssistant } from "./items/assistants/create-assistant"
 import { CreateCollection } from "./items/collections/create-collection"
 import { CreateFile } from "./items/files/create-file"
@@ -33,6 +34,7 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
   const [isCreatingAssistant, setIsCreatingAssistant] = useState(false)
   const [isCreatingTool, setIsCreatingTool] = useState(false)
   const [isCreatingModel, setIsCreatingModel] = useState(false)
+  const [isCreatingWorkflow, setIsCreatingWorkflow] = useState(false)
 
   const handleCreateFolder = async () => {
     if (!profile) return
@@ -90,6 +92,11 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
           setIsCreatingModel(true)
         }
 
+      case "workflows":
+        return async () => {
+          setIsCreatingWorkflow(true)
+        }
+
       default:
         break
     }
@@ -104,7 +111,7 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
           contentType.slice(1, contentType.length - 1)}
       </Button>
 
-      {hasData && (
+      {hasData && contentType !== "workflows" && (
         <Button className="size-[36px] p-1" onClick={handleCreateFolder}>
           <IconFolderPlus size={20} />
         </Button>
@@ -150,6 +157,13 @@ export const SidebarCreateButtons: FC<SidebarCreateButtonsProps> = ({
         <CreateModel
           isOpen={isCreatingModel}
           onOpenChange={setIsCreatingModel}
+        />
+      )}
+
+      {isCreatingWorkflow && (
+        <CreateWorkflow
+          isOpen={isCreatingWorkflow}
+          onOpenChange={setIsCreatingWorkflow}
         />
       )}
     </div>
