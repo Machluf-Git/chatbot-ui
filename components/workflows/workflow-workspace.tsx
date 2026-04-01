@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -9,7 +8,12 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { ChatbotUIContext } from "@/context/context"
 import {
   createWorkflowRun,
@@ -18,27 +22,71 @@ import {
   getWorkflowRunsByWorkspaceId,
   updateWorkflowTemplate
 } from "@/db/workflows"
+import { WorkflowInputField, WorkflowRun, WorkflowRunInput } from "@/types"
 import {
-  DEFAULT_WORKFLOW_RUN_INPUT,
-  WorkflowRun,
-  WorkflowRunInput,
-  workflowTemplateToInput
-} from "@/types"
-import {
+  IconBinaryTree2,
   IconPlayerPlay,
   IconRefresh,
-  IconTrash,
-  IconBinaryTree2
+  IconTrash
 } from "@tabler/icons-react"
-import { FC, useContext, useEffect, useMemo, useState } from "react"
+import {
+  FC,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState
+} from "react"
 import { toast } from "sonner"
 import { WorkflowEditorFields } from "./workflow-editor-fields"
 import {
   cloneWorkflowInput,
   createEmptyWorkflowStep,
+  createInitialWorkflowRunInput,
   getWorkflowRunsForTemplate,
-  validateWorkflowInput
+  serializeWorkflowRunInput,
+  validateWorkflowInput,
+  validateWorkflowRunInput,
+  workflowTemplateToInput
 } from "./workflow-utils"
+
+function formatJsonValue(value: unknown) {
+  if (value === null || value === undefined) return "-"
+  if (typeof value === "string") return value
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value)
+  }
+
+  return JSON.stringify(value)
+}
+
+function renderRunInputSummary(payload: unknown) {
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const entries = Object.entries(payload)
+    if (entries.length === 0) {
+      return (
+        <div className="text-muted-foreground text-sm">
+          No input values were provided.
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-2">
+        {entries.map(([key, value]) => (
+          <div key={key} className="rounded-md border p-3">
+            <div className="text-muted-foreground text-xs uppercase tracking-wide">
+              {key}
+            </div>
+            <div className="mt-1 text-sm">{formatJsonValue(value)}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return <div className="text-sm">{formatJsonValue(payload)}</div>
+}
 
 export const WorkflowWorkspace: FC = () => {
   const {
@@ -68,7 +116,11 @@ export const WorkflowWorkspace: FC = () => {
   const [deleting, setDeleting] = useState(false)
   const [runDialogOpen, setRunDialogOpen] = useState(false)
   const [runInput, setRunInput] = useState<WorkflowRunInput>(
-    DEFAULT_WORKFLOW_RUN_INPUT
+    createInitialWorkflowRunInput(
+      selectedWorkflowTemplate
+        ? workflowTemplateToInput(selectedWorkflowTemplate)
+        : editorValue || undefined
+    )
   )
   const [running, setRunning] = useState(false)
 
@@ -77,16 +129,27 @@ export const WorkflowWorkspace: FC = () => {
     Boolean(selectedWorkspace?.user_id) &&
     profile?.user_id === selectedWorkspace?.user_id
 
+  const runFormTemplate = useMemo(
+    () =>
+      selectedWorkflowTemplate
+        ? workflowTemplateToInput(selectedWorkflowTemplate)
+        : editorValue,
+    [selectedWorkflowTemplate, editorValue]
+  )
+
   useEffect(() => {
     if (selectedWorkflowTemplate) {
-      setEditorValue(workflowTemplateToInput(selectedWorkflowTemplate))
+      const nextValue = workflowTemplateToInput(selectedWorkflowTemplate)
+      setEditorValue(nextValue)
+      setRunInput(createInitialWorkflowRunInput(nextValue))
     } else {
       setEditorValue(null)
+      setRunInput(createInitialWorkflowRunInput())
     }
     setSelectedWorkflowRun(null)
   }, [selectedWorkflowTemplate, setSelectedWorkflowRun])
 
-  const refreshRuns = async () => {
+  const refreshRuns = useCallback(async () => {
     if (!selectedWorkspace || !selectedWorkflowTemplate) return
 
     try {
@@ -103,15 +166,22 @@ export const WorkflowWorkspace: FC = () => {
     } finally {
       setIsLoadingWorkflowRuns(false)
     }
-  }
+  }, [
+    selectedWorkspace,
+    selectedWorkflowTemplate,
+    selectedWorkflowRun,
+    setIsLoadingWorkflowRuns,
+    setSelectedWorkflowRun,
+    setWorkflowRuns
+  ])
 
   useEffect(() => {
-    if (!selectedWorkflowTemplate || !selectedWorkspace || !isWorkspaceOwner) {
+    if (!isWorkspaceOwner) {
       return
     }
 
     refreshRuns()
-  }, [selectedWorkflowTemplate?.id, selectedWorkspace?.id, isWorkspaceOwner])
+  }, [isWorkspaceOwner, refreshRuns])
 
   const runsForSelectedTemplate = useMemo(
     () =>
@@ -126,7 +196,10 @@ export const WorkflowWorkspace: FC = () => {
 
     setEditorValue({
       ...editorValue,
-      steps: [...editorValue.steps, createEmptyWorkflowStep(editorValue.steps.length)]
+      steps: [
+        ...editorValue.steps,
+        createEmptyWorkflowStep(editorValue.steps.length)
+      ]
     })
   }
 
@@ -155,6 +228,17 @@ export const WorkflowWorkspace: FC = () => {
     })
   }
 
+  const handleSelectRun = async (run: WorkflowRun) => {
+    try {
+      setIsLoadingWorkflowRunDetail(true)
+      const detail = await getWorkflowRunById(run.id)
+      setSelectedWorkflowRun(detail)
+    } catch (error: any) {
+      toast.error(error.message || "Failed to load run details")
+    } finally {
+      setIsLoadingWorkflowRunDetail(false)
+    }
+  }
   const handleSave = async () => {
     if (!selectedWorkflowTemplate || !editorValue) return
 
@@ -239,18 +323,24 @@ export const WorkflowWorkspace: FC = () => {
   }
 
   const handleRun = async () => {
-    if (!selectedWorkflowTemplate) return
+    if (!selectedWorkflowTemplate || !runFormTemplate) return
 
     try {
       setRunning(true)
+      validateWorkflowRunInput(runInput, runFormTemplate.inputFields)
+      const payload = serializeWorkflowRunInput(
+        runInput,
+        runFormTemplate.inputFields
+      )
+
       const createdRun = await createWorkflowRun(
         selectedWorkflowTemplate.id,
-        runInput.inputPayload,
+        payload as Record<string, any>,
         runInput.triggerRef
       )
       setWorkflowRuns(prev => [createdRun, ...prev])
       setRunDialogOpen(false)
-      setRunInput(DEFAULT_WORKFLOW_RUN_INPUT)
+      setRunInput(createInitialWorkflowRunInput(runFormTemplate))
       toast.success("Workflow run created")
       await refreshRuns()
     } catch (error: any) {
@@ -260,24 +350,73 @@ export const WorkflowWorkspace: FC = () => {
     }
   }
 
-  const handleSelectRun = async (run: WorkflowRun) => {
-    try {
-      setIsLoadingWorkflowRunDetail(true)
-      const detail = await getWorkflowRunById(run.id)
-      setSelectedWorkflowRun(detail)
-    } catch (error: any) {
-      toast.error(error.message || "Failed to load run details")
-    } finally {
-      setIsLoadingWorkflowRunDetail(false)
-    }
+  const updateRunInputField = (
+    field: WorkflowInputField,
+    fieldValue: string | boolean
+  ) => {
+    setRunInput(prev => ({
+      ...prev,
+      fieldValues: {
+        ...prev.fieldValues,
+        [field.key]: fieldValue
+      }
+    }))
   }
 
+  const renderRunField = (field: WorkflowInputField) => {
+    const valueForField = runInput.fieldValues[field.key]
+
+    if (field.type === "long_text") {
+      return (
+        <Textarea
+          rows={3}
+          value={String(valueForField ?? "")}
+          placeholder={field.placeholder || field.label}
+          onChange={e => updateRunInputField(field, e.target.value)}
+        />
+      )
+    }
+
+    if (field.type === "boolean") {
+      return (
+        <div className="flex items-center justify-between rounded-md border px-3 py-2">
+          <div>
+            <div className="text-sm font-medium">{field.label}</div>
+            <div className="text-muted-foreground text-xs">
+              {field.helpText || "Choose Yes or No."}
+            </div>
+          </div>
+          <Switch
+            checked={Boolean(valueForField)}
+            onCheckedChange={checked => updateRunInputField(field, checked)}
+          />
+        </div>
+      )
+    }
+
+    return (
+      <Input
+        type={
+          field.type === "number"
+            ? "number"
+            : field.type === "date"
+              ? "date"
+              : "text"
+        }
+        value={String(valueForField ?? "")}
+        placeholder={field.placeholder || field.label}
+        onChange={e => updateRunInputField(field, e.target.value)}
+      />
+    )
+  }
   if (!isWorkspaceOwner) {
     return (
       <div className="flex h-full items-center justify-center p-8">
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <CardTitle>You do not have access to workflows in this workspace</CardTitle>
+            <CardTitle>
+              You do not have access to workflows in this workspace
+            </CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -300,7 +439,8 @@ export const WorkflowWorkspace: FC = () => {
             <CardTitle>Create your first workflow</CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground text-sm">
-            Use the New Workflow button in the sidebar to start building a workflow.
+            Use the New Workflow button in the sidebar to start building a
+            workflow.
           </CardContent>
         </Card>
       </div>
@@ -339,7 +479,15 @@ export const WorkflowWorkspace: FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setRunDialogOpen(true)}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setRunInput(
+                createInitialWorkflowRunInput(runFormTemplate || editorValue)
+              )
+              setRunDialogOpen(true)
+            }}
+          >
             <IconPlayerPlay className="mr-1" size={16} />
             Run Workflow
           </Button>
@@ -364,7 +512,9 @@ export const WorkflowWorkspace: FC = () => {
         <div className="min-h-0 overflow-auto rounded-lg border p-4">
           <WorkflowEditorFields
             value={editorValue}
-            onChange={nextValue => setEditorValue(cloneWorkflowInput(nextValue))}
+            onChange={nextValue =>
+              setEditorValue(cloneWorkflowInput(nextValue))
+            }
             onAddStep={handleAddStep}
             onRemoveStep={handleRemoveStep}
             onMoveStep={handleMoveStep}
@@ -433,7 +583,19 @@ export const WorkflowWorkspace: FC = () => {
                   </div>
 
                   <div className="text-muted-foreground text-xs">
-                    Created {new Date(selectedWorkflowRun.run.created_at).toLocaleString()}
+                    Created{" "}
+                    {new Date(
+                      selectedWorkflowRun.run.created_at
+                    ).toLocaleString()}
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold">Input Summary</div>
+                    {renderRunInputSummary(
+                      selectedWorkflowRun.run.input_payload
+                    )}
                   </div>
 
                   <Separator />
@@ -443,7 +605,9 @@ export const WorkflowWorkspace: FC = () => {
                     {selectedWorkflowRun.steps.map(step => (
                       <div key={step.id} className="rounded-md border p-3">
                         <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-medium">{step.step_key}</div>
+                          <div className="text-sm font-medium">
+                            {step.step_key}
+                          </div>
                           <Badge variant="secondary">{step.status}</Badge>
                         </div>
                         <div className="text-muted-foreground mt-1 text-xs">
@@ -463,7 +627,10 @@ export const WorkflowWorkspace: FC = () => {
                       </div>
                     ) : (
                       selectedWorkflowRun.approvals.map(approval => (
-                        <div key={approval.id} className="rounded-md border p-3">
+                        <div
+                          key={approval.id}
+                          className="rounded-md border p-3"
+                        >
                           <div className="flex items-center justify-between gap-2">
                             <div className="text-sm font-medium">
                               Approval request
@@ -471,7 +638,8 @@ export const WorkflowWorkspace: FC = () => {
                             <Badge variant="secondary">{approval.status}</Badge>
                           </div>
                           <div className="text-muted-foreground mt-1 text-xs">
-                            Requested {new Date(approval.requested_at).toLocaleString()}
+                            Requested{" "}
+                            {new Date(approval.requested_at).toLocaleString()}
                           </div>
                         </div>
                       ))
@@ -509,7 +677,6 @@ export const WorkflowWorkspace: FC = () => {
           </Card>
         </div>
       </div>
-
       <Dialog open={runDialogOpen} onOpenChange={setRunDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -518,7 +685,7 @@ export const WorkflowWorkspace: FC = () => {
 
           <div className="space-y-4">
             <div className="space-y-1">
-              <div className="text-sm font-medium">Trigger Reference</div>
+              <Label>Trigger reference</Label>
               <Textarea
                 rows={2}
                 value={runInput.triggerRef}
@@ -528,20 +695,66 @@ export const WorkflowWorkspace: FC = () => {
               />
             </div>
 
-            <div className="space-y-1">
-              <div className="text-sm font-medium">Input Payload JSON</div>
-              <Textarea
-                rows={10}
-                className="font-mono text-xs"
-                value={runInput.inputPayload}
-                onChange={e =>
-                  setRunInput(prev => ({
-                    ...prev,
-                    inputPayload: e.target.value
-                  }))
-                }
-              />
-            </div>
+            <Tabs
+              value={runInput.editorMode}
+              onValueChange={mode =>
+                setRunInput(prev => ({
+                  ...prev,
+                  editorMode: mode as "guided" | "raw"
+                }))
+              }
+            >
+              <TabsList>
+                <TabsTrigger value="guided">Form</TabsTrigger>
+                <TabsTrigger value="raw">Raw JSON</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="guided" className="space-y-4">
+                {!runFormTemplate ||
+                runFormTemplate.inputFields.length === 0 ? (
+                  <div className="text-muted-foreground text-sm">
+                    This workflow does not require form inputs. You can run it
+                    now or use Raw JSON for advanced input.
+                  </div>
+                ) : (
+                  runFormTemplate.inputFields.map(field => (
+                    <div key={field.id} className="space-y-1">
+                      {field.type !== "boolean" && (
+                        <div className="flex items-center gap-2">
+                          <Label>{field.label}</Label>
+                          {field.required && (
+                            <span className="text-muted-foreground text-xs">
+                              Required
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {renderRunField(field)}
+                      {field.helpText && field.type !== "boolean" && (
+                        <div className="text-muted-foreground text-xs">
+                          {field.helpText}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="raw" className="space-y-1">
+                <Label>Input JSON</Label>
+                <Textarea
+                  rows={10}
+                  className="font-mono text-xs"
+                  value={runInput.rawInputPayload}
+                  onChange={e =>
+                    setRunInput(prev => ({
+                      ...prev,
+                      rawInputPayload: e.target.value
+                    }))
+                  }
+                />
+              </TabsContent>
+            </Tabs>
           </div>
 
           <DialogFooter>

@@ -4,6 +4,7 @@ import {
   WorkflowTemplate,
   WorkflowTemplateInput
 } from "@/types"
+import { serializeWorkflowTemplateInput } from "@/components/workflows/workflow-utils"
 
 async function parseResponse<T>(response: Response): Promise<T> {
   const payload = await response.json().catch(() => null)
@@ -16,8 +17,12 @@ async function parseResponse<T>(response: Response): Promise<T> {
 }
 
 export async function getWorkflowTemplatesByWorkspaceId(workspaceId: string) {
-  const response = await fetch(`/api/workflows/templates?workspaceId=${workspaceId}`)
-  const payload = await parseResponse<{ templates: WorkflowTemplate[] }>(response)
+  const response = await fetch(
+    `/api/workflows/templates?workspaceId=${workspaceId}`
+  )
+  const payload = await parseResponse<{ templates: WorkflowTemplate[] }>(
+    response
+  )
   return payload.templates || []
 }
 
@@ -25,6 +30,8 @@ export async function createWorkflowTemplate(
   workspaceId: string,
   input: WorkflowTemplateInput
 ) {
+  const serialized = serializeWorkflowTemplateInput(input)
+
   const response = await fetch("/api/workflows/templates", {
     method: "POST",
     headers: {
@@ -32,24 +39,8 @@ export async function createWorkflowTemplate(
     },
     body: JSON.stringify({
       workspaceId,
-      ...input,
-      steps: input.steps.map((step, index) => ({
-        stepKey: step.stepKey,
-        stepOrder: index,
-        stepType: step.stepType,
-        title: step.title,
-        timeoutSeconds: step.timeoutSeconds,
-        retryMax: step.retryMax,
-        retryBackoffSeconds: step.retryBackoffSeconds,
-        isRequired: step.isRequired,
-        onSuccessStepKey: step.onSuccessStepKey || null,
-        onFailureStepKey: step.onFailureStepKey || null,
-        config: JSON.parse(step.config),
-        inputMapping: JSON.parse(step.inputMapping),
-        outputSchema: JSON.parse(step.outputSchema)
-      })),
-      triggerConfig: JSON.parse(input.triggerConfig),
-      inputSchema: JSON.parse(input.inputSchema)
+      ...serialized,
+      steps: serialized.steps
     })
   })
 
@@ -61,30 +52,16 @@ export async function updateWorkflowTemplate(
   templateId: string,
   input: WorkflowTemplateInput
 ) {
+  const serialized = serializeWorkflowTemplateInput(input)
+
   const response = await fetch(`/api/workflows/templates/${templateId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      ...input,
-      steps: input.steps.map((step, index) => ({
-        stepKey: step.stepKey,
-        stepOrder: index,
-        stepType: step.stepType,
-        title: step.title,
-        timeoutSeconds: step.timeoutSeconds,
-        retryMax: step.retryMax,
-        retryBackoffSeconds: step.retryBackoffSeconds,
-        isRequired: step.isRequired,
-        onSuccessStepKey: step.onSuccessStepKey || null,
-        onFailureStepKey: step.onFailureStepKey || null,
-        config: JSON.parse(step.config),
-        inputMapping: JSON.parse(step.inputMapping),
-        outputSchema: JSON.parse(step.outputSchema)
-      })),
-      triggerConfig: JSON.parse(input.triggerConfig),
-      inputSchema: JSON.parse(input.inputSchema)
+      ...serialized,
+      steps: serialized.steps
     })
   })
 
@@ -109,7 +86,7 @@ export async function getWorkflowRunsByWorkspaceId(workspaceId: string) {
 
 export async function createWorkflowRun(
   templateId: string,
-  inputPayload: string,
+  inputPayload: Record<string, any>,
   triggerRef: string
 ) {
   const response = await fetch("/api/workflows/runs", {
@@ -119,7 +96,7 @@ export async function createWorkflowRun(
     },
     body: JSON.stringify({
       templateId,
-      inputPayload: JSON.parse(inputPayload),
+      inputPayload,
       triggerRef: triggerRef || null
     })
   })

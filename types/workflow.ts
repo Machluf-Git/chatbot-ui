@@ -1,7 +1,6 @@
-import { Json, Tables } from "@/supabase/types"
+import { Tables } from "@/supabase/types"
 
-export type WorkflowTemplateStep =
-  Tables<"workflow_template_steps">
+export type WorkflowTemplateStep = Tables<"workflow_template_steps">
 
 export type WorkflowTemplate = Tables<"workflow_templates"> & {
   steps: WorkflowTemplateStep[]
@@ -22,6 +21,57 @@ export type WorkflowRunDetail = {
   events: WorkflowEvent[]
 }
 
+export type WorkflowInputFieldType =
+  | "short_text"
+  | "long_text"
+  | "number"
+  | "boolean"
+  | "date"
+
+export type WorkflowScheduleFrequency = "daily" | "weekly"
+
+export type WorkflowDelayUnit = "minutes" | "hours"
+
+export type WorkflowFieldInputSourceType =
+  | "workflow_field"
+  | "previous_step"
+  | "fixed_text"
+
+export type WorkflowInputField = {
+  id: string
+  key: string
+  label: string
+  type: WorkflowInputFieldType
+  required: boolean
+  placeholder: string
+  helpText: string
+}
+
+export type GuidedTriggerConfig = {
+  type: "manual" | "schedule"
+  scheduleFrequency: WorkflowScheduleFrequency
+  scheduleTime: string
+  scheduleTimezone: string
+  scheduleDaysOfWeek: string[]
+}
+
+export type GuidedWorkflowStep = {
+  prompt: string
+  modelId: string
+  useWorkspaceDefaultModel: boolean
+  outputKey: string
+  toolId: string
+  inputSourceType: WorkflowFieldInputSourceType
+  inputFieldKey: string
+  inputStepKey: string
+  inputFixedText: string
+  approvalInstructions: string
+  approverLabel: string
+  delayDuration: number
+  delayUnit: WorkflowDelayUnit
+  endSummary: string
+}
+
 export type WorkflowTemplateStepInput = {
   stepKey: string
   title: string
@@ -32,9 +82,10 @@ export type WorkflowTemplateStepInput = {
   isRequired: boolean
   onSuccessStepKey: string
   onFailureStepKey: string
-  config: string
-  inputMapping: string
-  outputSchema: string
+  rawConfig: string
+  rawInputMapping: string
+  rawOutputSchema: string
+  guided: GuidedWorkflowStep
 }
 
 export type WorkflowTemplateInput = {
@@ -43,29 +94,82 @@ export type WorkflowTemplateInput = {
   status: WorkflowTemplate["status"]
   triggerType: WorkflowTemplate["trigger_type"]
   isActive: boolean
-  triggerConfig: string
-  inputSchema: string
+  rawTriggerConfig: string
+  rawInputSchema: string
+  inputFields: WorkflowInputField[]
+  guidedTrigger: GuidedTriggerConfig
   steps: WorkflowTemplateStepInput[]
+  editorMode: "guided" | "raw"
+  supportsGuidedMode: boolean
+  unsupportedReason: string | null
 }
 
 export type WorkflowRunInput = {
-  inputPayload: string
   triggerRef: string
+  rawInputPayload: string
+  fieldValues: Record<string, string | boolean>
+  editorMode: "guided" | "raw"
+}
+
+export const WORKFLOW_WEEKDAY_OPTIONS = [
+  { value: "sun", label: "Sun" },
+  { value: "mon", label: "Mon" },
+  { value: "tue", label: "Tue" },
+  { value: "wed", label: "Wed" },
+  { value: "thu", label: "Thu" },
+  { value: "fri", label: "Fri" },
+  { value: "sat", label: "Sat" }
+] as const
+
+export const DEFAULT_WORKFLOW_INPUT_FIELD: WorkflowInputField = {
+  id: "field_1",
+  key: "field_1",
+  label: "New field",
+  type: "short_text",
+  required: false,
+  placeholder: "",
+  helpText: ""
+}
+
+export const DEFAULT_GUIDED_TRIGGER_CONFIG: GuidedTriggerConfig = {
+  type: "manual",
+  scheduleFrequency: "daily",
+  scheduleTime: "09:00",
+  scheduleTimezone: "UTC",
+  scheduleDaysOfWeek: ["mon"]
+}
+
+export const DEFAULT_GUIDED_WORKFLOW_STEP: GuidedWorkflowStep = {
+  prompt: "",
+  modelId: "",
+  useWorkspaceDefaultModel: true,
+  outputKey: "",
+  toolId: "",
+  inputSourceType: "workflow_field",
+  inputFieldKey: "",
+  inputStepKey: "",
+  inputFixedText: "",
+  approvalInstructions: "",
+  approverLabel: "Workspace owner",
+  delayDuration: 5,
+  delayUnit: "minutes",
+  endSummary: ""
 }
 
 export const DEFAULT_WORKFLOW_STEP: WorkflowTemplateStepInput = {
   stepKey: "step_1",
-  title: "New Step",
-  stepType: "tool",
+  title: "AI Step",
+  stepType: "llm",
   timeoutSeconds: 300,
   retryMax: 0,
   retryBackoffSeconds: 0,
   isRequired: true,
   onSuccessStepKey: "",
   onFailureStepKey: "",
-  config: "{}",
-  inputMapping: "{}",
-  outputSchema: "{}"
+  rawConfig: "{}",
+  rawInputMapping: "{}",
+  rawOutputSchema: "{}",
+  guided: { ...DEFAULT_GUIDED_WORKFLOW_STEP }
 }
 
 export const DEFAULT_WORKFLOW_TEMPLATE_INPUT: WorkflowTemplateInput = {
@@ -74,51 +178,21 @@ export const DEFAULT_WORKFLOW_TEMPLATE_INPUT: WorkflowTemplateInput = {
   status: "draft",
   triggerType: "manual",
   isActive: true,
-  triggerConfig: "{}",
-  inputSchema: "{}",
-  steps: [{ ...DEFAULT_WORKFLOW_STEP }]
+  rawTriggerConfig: "{}",
+  rawInputSchema: "{}",
+  inputFields: [],
+  guidedTrigger: { ...DEFAULT_GUIDED_TRIGGER_CONFIG },
+  steps: [
+    { ...DEFAULT_WORKFLOW_STEP, guided: { ...DEFAULT_GUIDED_WORKFLOW_STEP } }
+  ],
+  editorMode: "guided",
+  supportsGuidedMode: true,
+  unsupportedReason: null
 }
 
 export const DEFAULT_WORKFLOW_RUN_INPUT: WorkflowRunInput = {
-  inputPayload: "{}",
-  triggerRef: ""
-}
-
-function prettyJson(value: Json | null | undefined) {
-  if (value === null || value === undefined) {
-    return "{}"
-  }
-
-  return JSON.stringify(value, null, 2)
-}
-
-export function workflowTemplateToInput(
-  template: WorkflowTemplate
-): WorkflowTemplateInput {
-  return {
-    name: template.name,
-    description: template.description || "",
-    status: template.status,
-    triggerType: template.trigger_type,
-    isActive: template.is_active,
-    triggerConfig: prettyJson(template.trigger_config),
-    inputSchema: prettyJson(template.input_schema),
-    steps:
-      template.steps.length > 0
-        ? template.steps.map(step => ({
-            stepKey: step.step_key,
-            title: step.title,
-            stepType: step.step_type,
-            timeoutSeconds: step.timeout_seconds,
-            retryMax: step.retry_max,
-            retryBackoffSeconds: step.retry_backoff_seconds,
-            isRequired: step.is_required,
-            onSuccessStepKey: step.on_success_step_key || "",
-            onFailureStepKey: step.on_failure_step_key || "",
-            config: prettyJson(step.config),
-            inputMapping: prettyJson(step.input_mapping),
-            outputSchema: prettyJson(step.output_schema)
-          }))
-        : [{ ...DEFAULT_WORKFLOW_STEP }]
-  }
+  triggerRef: "",
+  rawInputPayload: "{}",
+  fieldValues: {},
+  editorMode: "guided"
 }
