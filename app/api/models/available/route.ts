@@ -119,8 +119,29 @@ export async function GET(req: Request) {
       200
     )
   } catch (error: any) {
+    const message = String(error?.message || "")
+    const normalized = message.toLowerCase()
+
+    if (normalized === "user not found") {
+      return createResponse(
+        {
+          message: "You need to sign in before loading available models."
+        },
+        401
+      )
+    }
+
+    if (normalized === "profile not found") {
+      return createResponse(
+        {
+          message: "Your profile is not ready yet. Please sign out and sign in again."
+        },
+        404
+      )
+    }
+
     return createResponse(
-      { message: error.message || "Failed to load available models" },
+      { message: message || "Failed to load available models" },
       500
     )
   }

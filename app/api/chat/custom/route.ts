@@ -71,13 +71,32 @@ export async function POST(request: Request) {
 
     return new StreamingTextResponse(stream)
   } catch (error: any) {
+    const message = String(error?.message || "")
+    const normalized = message.toLowerCase()
+
+    if (normalized === "user not found") {
+      return new Response(
+        JSON.stringify({ message: "You need to sign in before using custom chat." }),
+        { status: 401 }
+      )
+    }
+
+    if (normalized === "profile not found") {
+      return new Response(
+        JSON.stringify({
+          message: "Your profile is not ready yet. Please sign out and sign in again."
+        }),
+        { status: 404 }
+      )
+    }
+
     if (error.message === "Forbidden") {
       return new Response(JSON.stringify({ message: "Forbidden" }), {
         status: 403
       })
     }
 
-    let errorMessage = error.message || "An unexpected error occurred"
+    let errorMessage = message || "An unexpected error occurred"
     const errorCode = error.status || 500
 
     if (errorMessage.toLowerCase().includes("api key not found")) {
