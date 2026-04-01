@@ -8,7 +8,7 @@ This document lists all tables currently defined in Supabase type definitions, i
 
 ## public Schema
 
-Total tables: **27**
+Total tables: **33**
 
 ### Table List
 
@@ -38,6 +38,12 @@ Total tables: **27**
 - `prompts`
 - `tool_workspaces`
 - `tools`
+- `workflow_approvals`
+- `workflow_events`
+- `workflow_run_steps`
+- `workflow_runs`
+- `workflow_template_steps`
+- `workflow_templates`
 - `workspaces`
 
 ### `assistant_collections`
@@ -685,6 +691,176 @@ Total tables: **3**
 
 - `objects_bucketId_fkey`: `bucket_id` -> `buckets.id`
 
+
+### `workflow_approvals`
+
+**Columns (15)**
+
+| Column | Type |
+|---|---|
+| `approval_payload` | `Json` |
+| `approver_group` | `string \| null` |
+| `approver_user_id` | `string \| null` |
+| `created_at` | `string` |
+| `decision_at` | `string \| null` |
+| `decision_by` | `string \| null` |
+| `decision_note` | `string \| null` |
+| `expires_at` | `string \| null` |
+| `id` | `string` |
+| `requested_at` | `string` |
+| `requested_by` | `string \| null` |
+| `run_id` | `string` |
+| `run_step_id` | `string` |
+| `status` | `string` |
+| `updated_at` | `string` |
+
+**Relationships (5)**
+
+- `workflow_approvals_approver_user_id_fkey`: `approver_user_id` -> `users.id`
+- `workflow_approvals_decision_by_fkey`: `decision_by` -> `users.id`
+- `workflow_approvals_requested_by_fkey`: `requested_by` -> `users.id`
+- `workflow_approvals_run_id_fkey`: `run_id` -> `workflow_runs.id`
+- `workflow_approvals_run_step_id_fkey`: `run_step_id` -> `workflow_run_steps.id`
+
+### `workflow_events`
+
+**Columns (10)**
+
+| Column | Type |
+|---|---|
+| `emitted_by_id` | `string \| null` |
+| `emitted_by_type` | `string` |
+| `event_type` | `string` |
+| `id` | `number` |
+| `level` | `string` |
+| `message` | `string` |
+| `occurred_at` | `string` |
+| `payload` | `Json` |
+| `run_id` | `string` |
+| `run_step_id` | `string \| null` |
+
+**Relationships (2)**
+
+- `workflow_events_run_id_fkey`: `run_id` -> `workflow_runs.id`
+- `workflow_events_run_step_id_fkey`: `run_step_id` -> `workflow_run_steps.id`
+
+### `workflow_run_steps`
+
+**Columns (19)**
+
+| Column | Type |
+|---|---|
+| `attempt` | `number` |
+| `cost_usd` | `number \| null` |
+| `created_at` | `string` |
+| `error_code` | `string \| null` |
+| `error_message` | `string \| null` |
+| `finished_at` | `string \| null` |
+| `id` | `string` |
+| `input_payload` | `Json` |
+| `model_used` | `string \| null` |
+| `output_payload` | `Json \| null` |
+| `run_id` | `string` |
+| `started_at` | `string \| null` |
+| `status` | `string` |
+| `step_key` | `string` |
+| `template_step_id` | `string \| null` |
+| `tokens_in` | `number \| null` |
+| `tokens_out` | `number \| null` |
+| `tool_used` | `string \| null` |
+| `updated_at` | `string` |
+
+**Relationships (2)**
+
+- `workflow_run_steps_run_id_fkey`: `run_id` -> `workflow_runs.id`
+- `workflow_run_steps_template_step_id_fkey`: `template_step_id` -> `workflow_template_steps.id`
+
+### `workflow_runs`
+
+**Columns (19)**
+
+| Column | Type |
+|---|---|
+| `context_payload` | `Json` |
+| `created_at` | `string` |
+| `created_by` | `string \| null` |
+| `current_step_key` | `string \| null` |
+| `error_code` | `string \| null` |
+| `error_message` | `string \| null` |
+| `finished_at` | `string \| null` |
+| `id` | `string` |
+| `input_payload` | `Json` |
+| `output_payload` | `Json \| null` |
+| `started_at` | `string \| null` |
+| `status` | `string` |
+| `template_id` | `string \| null` |
+| `template_snapshot` | `Json` |
+| `template_version` | `number` |
+| `trigger_ref` | `string \| null` |
+| `trigger_source` | `string` |
+| `updated_at` | `string` |
+| `workspace_id` | `string` |
+
+**Relationships (3)**
+
+- `workflow_runs_created_by_fkey`: `created_by` -> `users.id`
+- `workflow_runs_template_id_fkey`: `template_id` -> `workflow_templates.id`
+- `workflow_runs_workspace_id_fkey`: `workspace_id` -> `workspaces.id`
+
+### `workflow_template_steps`
+
+**Columns (17)**
+
+| Column | Type |
+|---|---|
+| `config` | `Json` |
+| `created_at` | `string` |
+| `id` | `string` |
+| `input_mapping` | `Json` |
+| `is_required` | `boolean` |
+| `on_failure_step_key` | `string \| null` |
+| `on_success_step_key` | `string \| null` |
+| `output_schema` | `Json` |
+| `retry_backoff_seconds` | `number` |
+| `retry_max` | `number` |
+| `step_key` | `string` |
+| `step_order` | `number` |
+| `step_type` | `string` |
+| `template_id` | `string` |
+| `timeout_seconds` | `number` |
+| `title` | `string` |
+| `updated_at` | `string` |
+
+**Relationships (1)**
+
+- `workflow_template_steps_template_id_fkey`: `template_id` -> `workflow_templates.id`
+
+### `workflow_templates`
+
+**Columns (14)**
+
+| Column | Type |
+|---|---|
+| `created_at` | `string` |
+| `created_by` | `string \| null` |
+| `description` | `string` |
+| `id` | `string` |
+| `input_schema` | `Json` |
+| `is_active` | `boolean` |
+| `name` | `string` |
+| `status` | `string` |
+| `trigger_config` | `Json` |
+| `trigger_type` | `string` |
+| `updated_at` | `string` |
+| `updated_by` | `string \| null` |
+| `version` | `number` |
+| `workspace_id` | `string` |
+
+**Relationships (3)**
+
+- `workflow_templates_created_by_fkey`: `created_by` -> `users.id`
+- `workflow_templates_updated_by_fkey`: `updated_by` -> `users.id`
+- `workflow_templates_workspace_id_fkey`: `workspace_id` -> `workspaces.id`
 
 ## Tables From Migrations Not Yet Reflected In `supabase/types.ts`
 
