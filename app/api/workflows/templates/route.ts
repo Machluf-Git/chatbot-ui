@@ -1,5 +1,6 @@
 import {
   NormalizedWorkflowTemplateStepInput,
+  getWorkflowApiErrorResponse,
   normalizeTemplatePayload,
   requireWorkspaceOwner,
   WorkflowTemplatePayload
@@ -59,13 +60,12 @@ export async function GET(req: Request) {
       200
     )
   } catch (error: any) {
-    if (error.message === "Forbidden") {
-      return createResponse({ message: "Forbidden" }, 403)
-    }
-
+    const mapped = getWorkflowApiErrorResponse(error)
     return createResponse(
-      { message: error.message || "Failed to load workflow templates" },
-      500
+      {
+        message: mapped.message || "Failed to load workflow templates"
+      },
+      mapped.status
     )
   }
 }
@@ -139,13 +139,12 @@ export async function POST(req: Request) {
       201
     )
   } catch (error: any) {
-    if (error.message === "Forbidden") {
-      return createResponse({ message: "Forbidden" }, 403)
-    }
-
+    const mapped = getWorkflowApiErrorResponse(error)
     return createResponse(
-      { message: error.message || "Failed to create workflow template" },
-      500
+      {
+        message: mapped.message || "Failed to create workflow template"
+      },
+      mapped.status
     )
   }
 }

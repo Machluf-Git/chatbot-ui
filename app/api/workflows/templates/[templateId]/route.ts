@@ -1,4 +1,5 @@
 import {
+  getWorkflowApiErrorResponse,
   getTemplateForUser,
   getWorkflowTemplateSteps,
   NormalizedWorkflowTemplateStepInput,
@@ -30,15 +31,10 @@ export async function GET(
 
     return createResponse({ template: { ...template, steps } }, 200)
   } catch (error: any) {
-    if (error.message === "Forbidden") {
-      return createResponse({ message: "Forbidden" }, 403)
-    }
-
-    const status = error.message === "Workflow template not found" ? 404 : 500
-
+    const mapped = getWorkflowApiErrorResponse(error)
     return createResponse(
-      { message: error.message || "Failed to load workflow template" },
-      status
+      { message: mapped.message || "Failed to load workflow template" },
+      mapped.status
     )
   }
 }
@@ -140,15 +136,10 @@ export async function PATCH(
       200
     )
   } catch (error: any) {
-    if (error.message === "Forbidden") {
-      return createResponse({ message: "Forbidden" }, 403)
-    }
-
-    const status = error.message === "Workflow template not found" ? 404 : 500
-
+    const mapped = getWorkflowApiErrorResponse(error)
     return createResponse(
-      { message: error.message || "Failed to update workflow template" },
-      status
+      { message: mapped.message || "Failed to update workflow template" },
+      mapped.status
     )
   }
 }
@@ -177,15 +168,10 @@ export async function DELETE(
 
     return createResponse({ success: true }, 200)
   } catch (error: any) {
-    if (error.message === "Forbidden") {
-      return createResponse({ message: "Forbidden" }, 403)
-    }
-
-    const status = error.message === "Workflow template not found" ? 404 : 500
-
+    const mapped = getWorkflowApiErrorResponse(error)
     return createResponse(
-      { message: error.message || "Failed to delete workflow template" },
-      status
+      { message: mapped.message || "Failed to delete workflow template" },
+      mapped.status
     )
   }
 }

@@ -280,6 +280,60 @@ export function normalizeRunCreatePayload(payload: WorkflowRunCreatePayload) {
   }
 }
 
+export function getWorkflowApiErrorResponse(error: any) {
+  const message = String(error?.message || error || "")
+  const normalized = message.toLowerCase()
+
+  if (message === "Forbidden") {
+    return { status: 403, message: "Forbidden" }
+  }
+
+  if (
+    normalized.includes("required") ||
+    normalized.includes("invalid") ||
+    normalized.includes("duplicate") ||
+    normalized.includes("too long") ||
+    normalized.includes("must be") ||
+    normalized.includes("at least one workflow step") ||
+    normalized.includes("cannot be run")
+  ) {
+    return { status: 400, message }
+  }
+
+  if (
+    normalized.includes("workflow_templates") ||
+    normalized.includes("workflow_template_steps") ||
+    normalized.includes("workflow_runs") ||
+    normalized.includes("workflow_run_steps") ||
+    normalized.includes("workflow_approvals") ||
+    normalized.includes("workflow_events") ||
+    normalized.includes("does not exist") ||
+    normalized.includes("relation") ||
+    normalized.includes("column") ||
+    normalized.includes("schema cache")
+  ) {
+    return {
+      status: 503,
+      message:
+        "Workflow storage is not ready on this server yet. Apply the latest database migrations and try again."
+    }
+  }
+
+  if (
+    normalized.includes("not found") ||
+    normalized.includes("workspace not found") ||
+    normalized.includes("template not found") ||
+    normalized.includes("run not found")
+  ) {
+    return { status: 404, message }
+  }
+
+  return {
+    status: 500,
+    message: message || "Unexpected workflow error"
+  }
+}
+
 export async function requireWorkspaceOwner(workspaceId: string) {
   const { user } = await getServerAuthContext()
   const supabaseAdmin = createServiceRoleClient()

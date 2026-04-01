@@ -1,4 +1,5 @@
 import {
+  getWorkflowApiErrorResponse,
   getRunForUser,
   getWorkflowRunSteps
 } from "@/lib/server/workflows"
@@ -54,15 +55,10 @@ export async function GET(
       200
     )
   } catch (error: any) {
-    if (error.message === "Forbidden") {
-      return createResponse({ message: "Forbidden" }, 403)
-    }
-
-    const status = error.message === "Workflow run not found" ? 404 : 500
-
+    const mapped = getWorkflowApiErrorResponse(error)
     return createResponse(
-      { message: error.message || "Failed to load workflow run" },
-      status
+      { message: mapped.message || "Failed to load workflow run" },
+      mapped.status
     )
   }
 }
